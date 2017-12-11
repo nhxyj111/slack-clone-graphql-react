@@ -7,7 +7,6 @@ import Channels from '../components/Channels';
 import Teams from '../components/Teams';
 import AddChannelModal from '../components/AddChannelModal';
 import InvitePeopleModal from '../components/InvitePeopleModal';
-import { allTeamsQuery } from '../graphql/team';
 
 class Sidebar extends Component {
   state = {
