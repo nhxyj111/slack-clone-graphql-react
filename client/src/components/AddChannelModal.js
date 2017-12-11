@@ -55,7 +55,7 @@ const createChannelMutation = gql`
 export default compose(
 graphql(createChannelMutation),
 withFormik({
-  mapPropsToValues: props => ({ name: '' }),
+  mapPropsToValues: () => ({ name: '' }),
   // Add a custom validation function (this can be async too!)
   // validate: (values, props) => {
   //   const errors = {};
@@ -92,6 +92,7 @@ withFormik({
         }
       },
       update: (store, { data: { createChannel } }) => {
+        // console.log(createChannel);
         const { ok, channel } = createChannel;
         if (!ok) return;
         const data = store.readQuery({ query: meQuery });

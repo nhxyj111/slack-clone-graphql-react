@@ -25,23 +25,9 @@ class Sidebar extends Component {
   }
 
   render() {
-    const { teams, team } = this.props;
+    const { teams, team, username } = this.props;
     const { openInvitePeopleModal, openAddChannelModal } = this.state;
-    let isOwner = false;
-    // if (loading) {
-    //   return null;
-    // }
-    // const teamIdx = currentTeamId ? findIndex(allTeams, ['id', parseInt(currentTeamId, 10)]) : 0;
-    // const team = allTeams[teamIdx];
-    let username = '';
-    try {
-      const token = localStorage.getItem('token');
-      const { user } = decode(token);
-      username = user.username;
-      isOwner = user.id === team.owner;
-    } catch(err) {
 
-    }
     return [
       <Teams
         key="team-sidebar"
@@ -55,7 +41,7 @@ class Sidebar extends Component {
         teamName={team.name}
         username={username}
         teamId={team.id}
-        isOwner={isOwner}
+        isOwner={team.admin}
         channels={team.channels}
         users={[{id: 1, name: "slackbot"}, {id: 2, name: 'fbbooot'}]}
         onAddChannelClick={this.toggleAddChannelModal}
