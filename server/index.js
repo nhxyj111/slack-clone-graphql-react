@@ -77,6 +77,7 @@ app.use('/graphql',
 
 app.use('/graphiql', graphiqlExpress({
   endpointURL: '/graphql',
+  subscriptionsEndpoint: 'ws://127.0.0.1:8080/subscriptions'
 }));
 
 const server = createServer(app);
@@ -86,7 +87,33 @@ models.sequelize.sync().then(() => {
     new SubscriptionServer({
       execute,
       subscribe,
-      schema
+      schema,
+      onConnect: async ({ token, refreshToken }, webSocket) => {
+        if (token && refreshToken) {
+          let user = null;
+          try {
+            const payload = jwt.verify(token, SECRET);
+            user = payload.user;
+          } catch (err) {
+            const refreshToken = req.headers['x-refresh-token'];
+            const newTokens = await refreshTokens(
+              token,
+              refreshToken,
+              models,
+              SECRET,
+              SECRET2
+            );
+            user = newTokens.user;
+          }
+          if (!user) throw new Error('Invalid auth tokens');
+
+          const member = models.Member.findOne({ where: { teamId: 1, userId: user.id } });
+          if (!member) throw new Error('Missing auth tokens');
+
+          return true;
+        }
+        throw new Error('Missing auth tokens');
+      }
     }, {
       server,
       path: '/subscriptions',
