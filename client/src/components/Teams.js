@@ -38,6 +38,9 @@ const team = ({ id, letter }) => <Link to={`/view-team/${id}`} key={`team-${id}`
 
 export default ({ teams }) => (
   <TeamWrapper>
-    <TeamList>{teams.map(team)}</TeamList>
+    <TeamList>
+      {teams.map(team)}
+      <Link to='/create-team' key='add-team'><TeamListItem>+</TeamListItem></Link>
+    </TeamList>
   </TeamWrapper>
 );
