@@ -3,6 +3,19 @@ import requiresAuth from '../permissions';
 
 export default {
   Query: {
+    getTeamMembers: requiresAuth.createResolver(
+      async (parent, { teamId}, { models }) => {
+        return models.sequelize.query(
+          'select * from users as u join members as m on m.userId=u.id where m.teamId=?',
+          {
+            replacements: [teamId],
+            model: models.User,
+            raw: true
+          }
+        );
+      }
+    ) //getTeamMembers
+
     // allTeams: requiresAuth.createResolver( async (parent, args, { models, user }) =>
     //   await models.Team.findAll({ where: { owner: user.id } }, { raw: true } )
     // ),
@@ -80,6 +93,14 @@ export default {
     })
   },
   Team: {
-    channels: ({ id }, args, { models }) => models.Channel.findAll({ where: { teamId: id } })
+    channels: ({ id }, args, { models }) => models.Channel.findAll({ where: { teamId: id } }),
+    directMessageMembers: ({ id }, args, { models, user }) => models.sequelize.query(
+      'select distinct u.* from users as u join direct_messages as dm on (u.id=dm.senderId) or (u.id=dm.receiverId) where (:currentUserId=dm.senderId or :currentUserId=dm.receiverId) and dm.teamId=:teamId',
+      {
+        replacements: { currentUserId: user.id, teamId: id },
+        model: models.User,
+        raw: true
+      }
+    ) // directMessageMembers
   }
 }

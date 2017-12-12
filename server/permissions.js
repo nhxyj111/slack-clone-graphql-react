@@ -17,3 +17,34 @@ export default createResolver((parent, args, { user }) => {
     throw new Error('Not authenticated');
   }
 });
+
+export const requiresTeamAccess = createResolver(
+  async (parent, { channelId }, { user, models }) => {
+    if (!user || !user.id) {
+      throw new Error('Not authenticated');
+    }
+    // check if part of team
+    const channel = await models.Channel.findOne({ where: { id: channelId } });
+    const member = await models.Member.findOne({ where: { teamId: channel.teamId, userId: user.id } });
+    if (!member) throw new Error("You have to be member of the team to subscribe to it's messages");
+
+  }
+)
+
+
+export const directMessageSubscription = createResolver(
+  async (parent, { teamId, userId }, { user, models }) => {
+    if (!user || !user.id) {
+      throw new Error('Not authenticated');
+    }
+    // check if part of team
+    const members = await models.Member.findAll({
+      where: {
+        teamId,
+        [models.sequelize.Op.or]: [{ userId }, { userId: user.id }]
+      }
+    });
+    if (members.length !== 2) throw new Error("something went wrong");
+
+  }
+);

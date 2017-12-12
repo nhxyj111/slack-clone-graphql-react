@@ -1,5 +1,6 @@
 import React from 'react';
-import { graphql } from 'react-apollo';
+import { graphql, compose } from 'react-apollo';
+import gql from 'graphql-tag';
 import findIndex from 'lodash/findIndex';
 import { Redirect } from 'react-router-dom';
 
@@ -12,7 +13,9 @@ import MessageContainer from '../containers/MessageContainer';
 import SideBar from '../containers/Sidebar';
 import { meQuery } from '../graphql/team';
 
-const ViewTeam = ({ data: { loading, me }, match: { params: { teamId, channelId } } }) => {
+const ViewTeam = ({
+  mutate,
+  data: { loading, me }, match: { params: { teamId, channelId } } }) => {
   if (loading) return null;
   const { teams, username } = me;
 
@@ -27,6 +30,7 @@ const ViewTeam = ({ data: { loading, me }, match: { params: { teamId, channelId 
   let channelIdInteger = parseInt(channelId, 10);
   const channelIdx = channelIdInteger ? findIndex(team.channels, ['id', channelIdInteger]) : 0;
   const channel = channelIdx === -1 ?  team.channels[0] : team.channels[channelIdx];
+  console.log(team.directMessageMembers);
   return (
     <AppLayout>
       <SideBar teams={teams} team={team} username={username}/>
@@ -36,11 +40,21 @@ const ViewTeam = ({ data: { loading, me }, match: { params: { teamId, channelId 
         <MessageContainer channelId={channel.id}/>
       )}
 
-      {channel && <SendMessage channelName={channel.name} channelId={channel.id}/>}
+      {channel && <SendMessage onSubmit={async (text) => {
+        await mutate({ variables: { text, channelId: channel.id}})
+      }} placeholder={channel.name} />}
     </AppLayout>
   );
 };
 
-export default graphql(meQuery, {
-  options: 'network-only'
-})(ViewTeam);
+const createMessageMutation = gql`
+  mutation($channelId: Int!, $text: String!) {
+    createMessage(channelId: $channelId, text: $text)
+  }
+`;
+
+export default compose(
+  graphql(meQuery, { options: 'network-only' }),
+  graphql(createMessageMutation)
+
+)(ViewTeam);

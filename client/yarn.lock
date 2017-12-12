@@ -2041,6 +2041,10 @@ dotenv@4.0.0:
   version "4.0.0"
   resolved "http://registry.npm.taobao.org/dotenv/download/dotenv-4.0.0.tgz#864ef1379aced55ce6f95debecdce179f7a0cd1d"
 
+downshift@^1.22.3:
+  version "1.22.3"
+  resolved "http://registry.npm.taobao.org/downshift/download/downshift-1.22.3.tgz#e8d19586edbaaf5379ef0ab3ff83609a57c03193"
+
 duplexer2@^0.1.4:
   version "0.1.4"
   resolved "http://registry.npm.taobao.org/duplexer2/download/duplexer2-0.1.4.tgz#8b12dab878c0d69e3e7891051662a32fc6bddcc1"
