@@ -11,7 +11,7 @@ const SendMessageWrapper = styled.div`
   grid-row: 3;
   margin: 20px;
   display: grid;
-  grid-template-columns: 8% auto;
+  grid-template-columns: 50px auto;
 `;
 
 const ENTER_KEY = 13;
@@ -22,10 +22,11 @@ const SendMessage = ({
   handleChange,
   handleBlur,
   handleSubmit,
-  isSubmitting
+  isSubmitting,
+  channelId
 }) => (
   <SendMessageWrapper>
-    <FileUpload>
+    <FileUpload channelId={channelId}>
       <Button icon>
         <Icon name="plus"/>
       </Button>

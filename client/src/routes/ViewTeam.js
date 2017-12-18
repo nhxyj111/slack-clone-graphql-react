@@ -16,8 +16,8 @@ import { meQuery } from '../graphql/team';
 const ViewTeam = ({
   mutate,
   data: { loading, me }, match: { params: { teamId, channelId } } }) => {
-  if (loading) return null;
-  const { teams, username } = me;
+  if (loading || !me) return null;
+  const { teams, username, id: currentUserId } = me;
 
   if (!teams.length) {
     return <Redirect to="/create-team"/>;
@@ -33,7 +33,7 @@ const ViewTeam = ({
   console.log(team.directMessageMembers);
   return (
     <AppLayout>
-      <SideBar teams={teams} team={team} username={username}/>
+      <SideBar teams={teams} team={team} username={username} currentUserId={currentUserId}/>
       {channel && <Header channelName={channel.name}/>}
 
       {channel && (
@@ -42,7 +42,7 @@ const ViewTeam = ({
 
       {channel && <SendMessage onSubmit={async (text) => {
         await mutate({ variables: { text, channelId: channel.id}})
-      }} placeholder={channel.name} />}
+      }} placeholder={channel.name} channelId={channel.id} />}
     </AppLayout>
   );
 };

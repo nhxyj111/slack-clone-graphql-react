@@ -10,6 +10,7 @@ import { execute, subscribe } from 'graphql';
 import { createServer } from 'http';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 import { PubSub } from 'graphql-subscriptions';
+import formidable from 'formidable';
 
 // import typeDefs from './schema';
 // import resolvers from './resolvers';
@@ -58,10 +59,45 @@ const addUser = async (req, res, next) => {
   next();
 };
 
+const uploadDir = 'files';
+
+const fileMiddleware = (req, res, next) => {
+  if (!req.is('multipart/form-data')) {
+    return next();
+  }
+
+  const form = formidable.IncomingForm({
+    uploadDir,
+  });
+
+  form.parse(req, (error, { operations }, files) => {
+    if (error) {
+      console.log(error);
+    }
+
+    const document = JSON.parse(operations);
+
+    if (Object.keys(files).length) {
+      const { file: { type, path: filePath } } = files;
+      console.log(type);
+      console.log(filePath);
+      document.variables.file = {
+        type,
+        path: filePath,
+      };
+    }
+
+    req.body = document;
+    next();
+  });
+};
+
+
 app.use(addUser);
 
 app.use('/graphql',
   bodyParser.json(),
+  fileMiddleware,
   graphqlExpress((req) => ({
     schema,
     context: {
@@ -79,6 +115,8 @@ app.use('/graphiql', graphiqlExpress({
   endpointURL: '/graphql',
   subscriptionsEndpoint: 'ws://127.0.0.1:8080/subscriptions'
 }));
+
+app.use('/files', express.static('files'))
 
 const server = createServer(app);
 

@@ -1,7 +1,8 @@
 import requiresAuth, { directMessageSubscription } from '../permissions';
 import { PubSub, withFilter } from 'graphql-subscriptions';
 
-const pubsub = new PubSub();
+// const pubsub = new PubSub();
+import pubsub from '../pubsub';
 
 const NEW_DIRECT_MESSAGE = 'NEW_DIRECT_MESSAGE';
 

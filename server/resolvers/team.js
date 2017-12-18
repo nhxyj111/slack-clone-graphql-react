@@ -93,7 +93,24 @@ export default {
     })
   },
   Team: {
-    channels: ({ id }, args, { models }) => models.Channel.findAll({ where: { teamId: id } }),
+    // channels: ({ id }, args, { models }) => models.Channel.findAll({
+    //   where: {
+    //     teamId: id, public: true
+    //   }
+    // }),
+    channels: ({ id }, args, { models, user }) =>
+      models.sequelize.query(`
+      select distinct c.*
+      from channels as c left outer join pcmembers as pc
+      on c.id = pc.channelId
+      where c.teamId = :teamId and (c.public = true or pc.userId = :userId);
+      `,
+      {
+        replacements: { teamId: id, userId: user.id },
+        model: models.Channel,
+        raw: true,
+      }
+    ),
     directMessageMembers: ({ id }, args, { models, user }) => models.sequelize.query(
       'select distinct u.* from users as u join direct_messages as dm on (u.id=dm.senderId) or (u.id=dm.receiverId) where (:currentUserId=dm.senderId or :currentUserId=dm.receiverId) and dm.teamId=:teamId',
       {
