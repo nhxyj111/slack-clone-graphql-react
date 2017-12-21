@@ -9,6 +9,12 @@ export default (sequelize, DataTypes) => {
     filetype: {
       type: DataTypes.STRING,
     },
+  }, {
+    indexes: [
+      {
+        fields: ['createdAt']
+      }
+    ]
   });
 
   Message.associate = models => {

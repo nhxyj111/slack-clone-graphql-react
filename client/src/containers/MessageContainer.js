@@ -67,11 +67,18 @@ class MessageContainer extends Component {
     });
   }
 
-  componentWillReceiveProps({ channelId }) {
-    console.log('props:', channelId);
+  componentWillReceiveProps({ data: { messages }, channelId }) {
+    // console.log('props:', channelId);
     if (this.props.channelId !== channelId) {
       if (this.unsubscribe) this.unsubscribe();
       this.unsubscribe = this.subscribe(channelId);
+    }
+    if (this.scroller && this.scroller.scrollTop < 100 && this.props.data.messages && messages && this.props.data.messages.length !== messages.length) {
+      const heightBeforeRender = this.scroller.scrollHeight;
+      setTimeout(() => {
+        this.scroller.scrollTop = this.scroller.scrollHeight - heightBeforeRender;
+      }, 100);
+
     }
   }
 
@@ -79,25 +86,54 @@ class MessageContainer extends Component {
     if (this.unsubscribe) this.unsubscribe();
   }
 
+  handleScroll = () => {
+    const { data: { messages, fetchMore }, channelId } = this.props;
+    if (this.scroller && this.scroller.scrollTop < 100 && this.state.hasMoreItems && messages.length) {
+      // console.log(this.scroller.scrollTop);
+      fetchMore({
+        variables: {
+          channelId,
+          curosr: messages[messages.length - 1]
+        },
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          if (!fetchMoreResult) {
+            return previousResult;
+          }
+
+          if (fetchMoreResult.messages.length < 10) {
+            this.setState({ hasMoreItems: false });
+          }
+          return {
+            ...previousResult,
+            messages: [...previousResult.messages, ...fetchMoreResult.messages]
+          };
+        }
+      });
+    }
+  }
+
   render() {
-    const { data: { loading, messages }, channelId } = this.props;
+    const { data: { loading, messages, fetchMore }, channelId } = this.props;
     return (
       loading ? null : (
-        <FileUpload disableClick channelId={channelId} style={{
+        <div style={{
           gridColumn: 3,
           gridRow: 2,
           paddingLeft: '20px',
           paddingRight: '20px',
-          display: 'flex',
-          flexDirection: 'column-reverse',
           overflowY: 'auto'
+        }} ref={(scroller) => {this.scroller = scroller;}} onScroll={this.handleScroll}>
+        <FileUpload disableClick channelId={channelId} style={{
+          flexDirection: 'column-reverse',
+          display: 'flex'
+
         }}>
           <Comment.Group>
-            {this.state.hasMoreItems && <Button onClick={() => {
-              this.props.data.fetchMore({
+            {this.state.hasMoreItems && messages.length >= 10 && <Button onClick={() => {
+              fetchMore({
                 variables: {
-                  channelId: this.props.channelId,
-                  offset: this.props.data.messages.length
+                  channelId,
+                  curosr: messages[messages.length - 1]
                 },
                 updateQuery: (previousResult, { fetchMoreResult }) => {
                   if (!fetchMoreResult) {
@@ -117,7 +153,7 @@ class MessageContainer extends Component {
                 }
               });
             }}>Load more</Button>}
-            {[...messages].reverse().map(m => (
+            {messages && [...messages].reverse().map(m => (
               <Comment key={`message-${m.id}`}>
                 <Comment.Avatar src='/assets/images/avatar/elliot.jpg' />
                 <Comment.Content>
@@ -134,13 +170,14 @@ class MessageContainer extends Component {
             ))}
           </Comment.Group>
         </FileUpload>
+        </div>
     ))
   }
 }
 
 const messagesQuery = gql`
-  query($offset: Int!, $channelId: Int!) {
-    messages(offset: $offset, channelId: $channelId) {
+  query($cursor: String, $channelId: Int!) {
+    messages(cursor: $cursor, channelId: $channelId) {
       id
       text
       user {
@@ -156,8 +193,7 @@ const messagesQuery = gql`
 export default graphql(messagesQuery, {
   options: props => ({
     variables: {
-      channelId: props.channelId,
-      offset: 0
+      channelId: props.channelId
     },
     fetchPolicy: 'network-only'
   })
